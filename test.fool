@@ -1,35 +1,4 @@
-print(
-  if (5+3)*-7 == 9
-    then { 8 }
-    else { false }
-);
-
-/* print(
-  if 4 <= 4
-    then { 1 }
-    else { 0 }
-);
-
-print(
-  if 16 / 4 == 4
-    then { 1 }
-    else { 0 }
-);
-
-print(
-  if true || false
-    then { 1 }
-    else { 0 }
-);
-
-print(
-  if false && true
-    then { 1 }
-    else { 0 }
-);
-
-print(
-  if !false
-    then { 1 }
-    else { 0 }
-); */
+let
+    var a: int = (10 / 3);
+in
+    print(a);

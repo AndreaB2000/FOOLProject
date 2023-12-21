@@ -219,7 +219,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	@Override
 	public Node visitDiv(DivContext c) {
 		if (print) printVarAndProdName(c);
-		Node n = new MoreEqualNode(visit(c.exp(0)), visit(c.exp(1)));
+		Node n = new DivNode(visit(c.exp(0)), visit(c.exp(1)));
 		n.setLine(c.DIV().getSymbol().getLine());
 		return n;
 	}
