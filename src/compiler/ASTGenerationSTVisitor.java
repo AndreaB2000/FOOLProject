@@ -8,6 +8,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import compiler.AST.*;
 import compiler.FOOLParser.*;
 import compiler.lib.*;
+import org.antlr.v4.runtime.tree.TerminalNode;
+
 import static compiler.lib.FOOLlib.*;
 
 public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
@@ -57,27 +59,51 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	}
 
 	@Override
-	public Node visitTimes(TimesContext c) {
+	public Node visitTimesDiv(TimesDivContext c) {
 		if (print) printVarAndProdName(c);
-		Node n = new TimesNode(visit(c.exp(0)), visit(c.exp(1)));
-		n.setLine(c.TIMES().getSymbol().getLine());		// setLine added
-        return n;		
+
+		Node n = null;
+		if (c.TIMES() != null) {
+			n = new TimesNode(visit(c.exp(0)), visit(c.exp(1)));
+			n.setLine(c.TIMES().getSymbol().getLine());        // setLine added
+		} else if (c.DIV() != null) {
+			n = new DivNode(visit(c.exp(0)), visit(c.exp(1)));
+			n.setLine(c.DIV().getSymbol().getLine());        // setLine added
+		}
+		return n;
 	}
 
 	@Override
-	public Node visitPlus(PlusContext c) {
+	public Node visitPlusMinus(PlusMinusContext c) {
 		if (print) printVarAndProdName(c);
-		Node n = new PlusNode(visit(c.exp(0)), visit(c.exp(1)));
-		n.setLine(c.PLUS().getSymbol().getLine());	
-        return n;		
+
+		Node n = null;
+		if (c.PLUS() != null) {
+			n = new PlusNode(visit(c.exp(0)), visit(c.exp(1)));
+			n.setLine(c.PLUS().getSymbol().getLine());
+		} else if (c.MINUS() != null) {
+			n = new MinusNode(visit(c.exp(0)), visit(c.exp(1)));
+			n.setLine(c.MINUS().getSymbol().getLine());
+		}
+		return n;
 	}
 
 	@Override
-	public Node visitEq(EqContext c) {
+	public Node visitComp(CompContext c) {
 		if (print) printVarAndProdName(c);
-		Node n = new EqualNode(visit(c.exp(0)), visit(c.exp(1)));
-		n.setLine(c.EQ().getSymbol().getLine());		
-        return n;		
+
+		Node n = null;
+		if (c.EQ() != null) {
+			n = new EqualNode(visit(c.exp(0)), visit(c.exp(1)));
+			n.setLine(c.EQ().getSymbol().getLine());
+		} else if (c.GE() != null) {
+			n = new MoreEqualNode(visit(c.exp(0)), visit(c.exp(1)));
+			n.setLine(c.GE().getSymbol().getLine());
+		} else if (c.LE() != null) {
+			n = new LessEqualNode(visit(c.exp(0)), visit(c.exp(1)));
+			n.setLine(c.LE().getSymbol().getLine());
+		}
+		return n;
 	}
 
 	@Override
@@ -182,45 +208,18 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		return n;
 	}
 
-	/* Added features */
-
 	@Override
-	public Node visitLesseq(LesseqContext c) {
+	public Node visitAndOr(AndOrContext c) {
 		if (print) printVarAndProdName(c);
-		Node n = new LessEqualNode(visit(c.exp(0)), visit(c.exp(1)));
-		n.setLine(c.LESSEQ().getSymbol().getLine());
-		return n;
-	}
 
-	@Override
-	public Node visitMoreeq(MoreeqContext c) {
-		if (print) printVarAndProdName(c);
-		Node n = new MoreEqualNode(visit(c.exp(0)), visit(c.exp(1)));
-		n.setLine(c.MOREEQ().getSymbol().getLine());
-		return n;
-	}
-
-	@Override
-	public Node visitOr(OrContext c) {
-		if (print) printVarAndProdName(c);
-		Node n = new OrNode(visit(c.exp(0)), visit(c.exp(1)));
-		n.setLine(c.OR().getSymbol().getLine());
-		return n;
-	}
-
-	@Override
-	public Node visitAnd(AndContext c) {
-		if (print) printVarAndProdName(c);
-		Node n = new AndNode(visit(c.exp(0)), visit(c.exp(1)));
-		n.setLine(c.AND().getSymbol().getLine());
-		return n;
-	}
-
-	@Override
-	public Node visitDiv(DivContext c) {
-		if (print) printVarAndProdName(c);
-		Node n = new DivNode(visit(c.exp(0)), visit(c.exp(1)));
-		n.setLine(c.DIV().getSymbol().getLine());
+		Node n = null;
+		if (c.AND() != null) {
+			n = new AndNode(visit(c.exp(0)), visit(c.exp(1)));
+			n.setLine(c.AND().getSymbol().getLine());
+		} else if (c.OR() != null) {
+			n = new OrNode(visit(c.exp(0)), visit(c.exp(1)));
+			n.setLine(c.OR().getSymbol().getLine());
+		}
 		return n;
 	}
 
@@ -230,5 +229,71 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		Node n = new NotNode(visit(c.exp()));
 		n.setLine(c.NOT().getSymbol().getLine());
 		return n;
+	}
+
+	@Override
+	public Node visitCldec(CldecContext ctx) {
+		if (print) printVarAndProdName(ctx);
+
+		String className = ctx.ID(0).getText();
+		List<FieldNode> fields = new ArrayList<>();
+		List<MethodNode> methods = new ArrayList<>();
+
+		for (int i = 1; i < ctx.ID().size(); i++) {
+			fields.add(new FieldNode(ctx.ID(i).getText(), (TypeNode) visit(ctx.type(i))));
+		}
+
+		for (int i = 0; i < ctx.methdec().size(); i++) {
+			methods.add((MethodNode) visit(ctx.methdec(i)));
+		}
+
+		Node n = new ClassNode(className, fields, methods);
+		n.setLine(ctx.CLASS().getSymbol().getLine());
+		return n;
+	}
+
+	@Override
+	public Node visitMethdec(MethdecContext ctx) {
+		if (print) printVarAndProdName(ctx);
+
+		String id = ctx.ID(0).getText();
+		TypeNode retType = (TypeNode) visit(ctx.type(0));
+		List<ParNode> parList = new ArrayList<>();
+		List<DecNode> decList = new ArrayList<>();
+
+		Node n = new MethodNode(id, retType, parList, decList, visit(ctx.exp());
+		n.setLine(ctx.FUN().getSymbol().getLine());
+		return n;
+	}
+
+	@Override
+	public Node visitNew(NewContext ctx) {
+		if (print) printVarAndProdName(ctx);
+
+		String className = ctx.ID().getText();
+		List<Node> exps = new ArrayList<>();
+
+		for (final ExpContext exp : ctx.exp()) {
+			exps.add(visit(exp));
+		}
+
+		Node n = new ClassCallNode(className, exps);
+		n.setLine(ctx.NEW().getSymbol().getLine());
+		return n;
+	}
+
+	@Override
+	public Node visitNull(NullContext ctx) {
+		return super.visitNull(ctx);
+	}
+
+	@Override
+	public Node visitDotCall(DotCallContext ctx) {
+		return super.visitDotCall(ctx);
+	}
+
+	@Override
+	public Node visitIdType(IdTypeContext ctx) {
+		return super.visitIdType(ctx);
 	}
 }

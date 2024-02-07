@@ -1,4 +1,16 @@
 let
-    var a: int = (10 / 3);
+  var x:int = 5+3;
+  fun f:bool (n:int, m:int)
+    let
+      var x:bool = true;
+    in x==(n==m);
 in
-    print(a);
+  print (
+   if x==8
+     then {
+        print(123)
+     }
+     else { 10 }
+   }
+  )
+;
