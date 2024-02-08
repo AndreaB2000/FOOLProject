@@ -199,7 +199,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	}
 
 	@Override
-	public String visitNode(MoreEqualNode n) {
+	public String visitNode(GreaterEqualNode n) {
 		if (print) printNode(n);
 		String l1 = freshLabel();
 		String l2 = freshLabel();
@@ -292,6 +292,19 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 				isFalse + ":",
 				"push 1",
 				end + ":"
+		);
+	}
+
+	@Override
+	public String visitNode(ClassNode classNode) {
+		if (print) printNode(classNode);
+		String declCode = null;
+		for (Node dec : classNode.fields) declCode=nlJoin(declCode,visit(dec));
+		for (Node dec : classNode.methods) declCode=nlJoin(declCode,visit(dec));
+		return nlJoin(
+				"push 0",
+				declCode, // generate code for declarations (allocation)
+				getCode()
 		);
 	}
 }

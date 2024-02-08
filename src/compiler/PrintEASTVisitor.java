@@ -155,7 +155,7 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 	}
 
 	@Override
-	public Void visitNode(MoreEqualNode n) {
+	public Void visitNode(GreaterEqualNode n) {
 		printNode(n);
 		visit(n.left);
 		visit(n.right);

@@ -1,4 +1,4 @@
-// Generated from /home/andrea/Documents/Universita/FOOLProject/src/compiler/FOOL.g4 by ANTLR 4.13.1
+// Generated from C:/Users/gurfi/Desktop/Progetti/FOOLProject/src/compiler/FOOL.g4 by ANTLR 4.13.1
 package compiler;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;

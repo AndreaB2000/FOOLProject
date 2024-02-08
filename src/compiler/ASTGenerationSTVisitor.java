@@ -97,7 +97,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 			n = new EqualNode(visit(c.exp(0)), visit(c.exp(1)));
 			n.setLine(c.EQ().getSymbol().getLine());
 		} else if (c.GE() != null) {
-			n = new MoreEqualNode(visit(c.exp(0)), visit(c.exp(1)));
+			n = new GreaterEqualNode(visit(c.exp(0)), visit(c.exp(1)));
 			n.setLine(c.GE().getSymbol().getLine());
 		} else if (c.LE() != null) {
 			n = new LessEqualNode(visit(c.exp(0)), visit(c.exp(1)));
@@ -174,7 +174,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		Node thenNode = visit(c.exp(1));
 		Node elseNode = visit(c.exp(2));
 		Node n = new IfNode(ifNode, thenNode, elseNode);
-		n.setLine(c.IF().getSymbol().getLine());			
+		n.setLine(c.IF().getSymbol().getLine());
         return n;		
 	}
 
@@ -261,7 +261,15 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		List<ParNode> parList = new ArrayList<>();
 		List<DecNode> decList = new ArrayList<>();
 
-		Node n = new MethodNode(id, retType, parList, decList, visit(ctx.exp());
+		for (int i = 1; i < ctx.ID().size(); i++) {
+			parList.add(new ParNode(ctx.ID(i).getText(), (TypeNode) visit(ctx.type(i))));
+		}
+
+		for (DecContext dec : ctx.dec()) {
+			decList.add((DecNode) visit(dec));
+		}
+
+		Node n = new MethodNode(id, retType, parList, decList, visit(ctx.exp()));
 		n.setLine(ctx.FUN().getSymbol().getLine());
 		return n;
 	}
@@ -277,23 +285,34 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 			exps.add(visit(exp));
 		}
 
-		Node n = new ClassCallNode(className, exps);
+		Node n = new NewNode(new RefTypeNode(className), exps);
 		n.setLine(ctx.NEW().getSymbol().getLine());
 		return n;
 	}
 
 	@Override
 	public Node visitNull(NullContext ctx) {
-		return super.visitNull(ctx);
+		if (print) printVarAndProdName(ctx);
+		Node n = new EmptyNode();
+		n.setLine(ctx.NULL().getSymbol().getLine());
+		return n;
 	}
 
 	@Override
 	public Node visitDotCall(DotCallContext ctx) {
-		return super.visitDotCall(ctx);
+		if (print) printVarAndProdName(ctx);
+
+		List<Node> args = new ArrayList<>();
+
+		for (final ExpContext exp : ctx.exp()) {
+			args.add(visit(exp));
+		}
+		return new ClassCallNode(ctx.ID(0).getText(), ctx.ID(1).getText(), args);
 	}
 
 	@Override
 	public Node visitIdType(IdTypeContext ctx) {
-		return super.visitIdType(ctx);
+		if (print) printVarAndProdName(ctx);
+		return new RefTypeNode(ctx.ID().getText());
 	}
 }

@@ -8,6 +8,7 @@ import compiler.lib.*;
 public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	
 	private List<Map<String, STentry>> symTable = new ArrayList<>();
+	private final Map<String, Map<String, STentry>> classTable = new HashMap<>();
 	private int nestingLevel=0; // current nesting level
 	private int decOffset=-2; // counter for offset of local declarations at current nesting level 
 	int stErrors=0;
@@ -180,7 +181,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	}
 
 	@Override
-	public Void visitNode(MoreEqualNode n) {
+	public Void visitNode(GreaterEqualNode n) {
 		if (print) printNode(n);
 		visit(n.left);
 		visit(n.right);
@@ -215,6 +216,22 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	public Void visitNode(NotNode n) {
 		if (print) printNode(n);
 		visit(n.arg);
+		return null;
+	}
+
+	@Override
+	public Void visitNode(ClassNode n) {
+		if (print) printNode(n);
+		Map<String, STentry> hm = new HashMap<>();
+		classTable.put(n.id, hm);
+		for (FieldNode f : n.fields) {
+			STentry entry = new STentry(nestingLevel, f.getType(), decOffset--);
+			if (hm.put(f.id, entry) != null) {
+				System.out.println("Field id " + f.id + " at line "+ n.getLine() +" already declared");
+				stErrors++;
+			}
+		}
+		for (MethodNode m : n.methods) visit(m);
 		return null;
 	}
 }

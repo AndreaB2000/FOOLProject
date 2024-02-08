@@ -189,7 +189,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	}
 
 	@Override
-	public TypeNode visitNode(MoreEqualNode n) throws TypeException {
+	public TypeNode visitNode(GreaterEqualNode n) throws TypeException {
 		if (print) printNode(n);
 		TypeNode l = visit(n.left);
 		TypeNode r = visit(n.right);
@@ -231,7 +231,91 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	@Override
 	public TypeNode visitNode(NotNode n) throws TypeException {
 		if (print) printNode(n);
-		TypeNode l = visit(n.arg);
+		TypeNode t = visit(n.arg);
+		if ( !(t instanceof BoolTypeNode) )
+			throw new TypeException("Incompatible type in not ",n.getLine());
 		return new BoolTypeNode();
+	}
+
+	@Override
+	public TypeNode visitNode(EmptyNode n) throws TypeException {
+		if (print) printNode(n);
+		return new EmptyTypeNode();
+	}
+
+	@Override
+	public TypeNode visitNode(EmptyTypeNode n) {
+		if (print) printNode(n);
+		return null;
+	}
+
+	@Override
+	public TypeNode visitNode(ClassNode n) {
+		if (print) printNode(n, n.id);
+		return new ClassTypeNode(
+				n.fields.stream().map(DecNode::getType).toList(),
+				n.methods.stream().map(
+						method -> new ArrowTypeNode(method.parlist.stream().map(DecNode::getType).toList(), method.retType)
+				).toList());
+	}
+
+	@Override
+	public TypeNode visitNode(ClassTypeNode n) {
+		if (print) printNode(n);
+		return null;
+	}
+
+	@Override
+	public TypeNode visitNode(ParNode n) throws TypeException {
+		return super.visitNode(n);
+	}
+
+	@Override
+	public TypeNode visitNode(MinusNode n) throws TypeException {
+		if (print) printNode(n);
+		if ( !(isSubtype(visit(n.left), new IntTypeNode())
+				&& isSubtype(visit(n.right), new IntTypeNode())) )
+			throw new TypeException("Non integers in subtraction",n.getLine());
+		return new IntTypeNode();
+	}
+
+	@Override
+	public TypeNode visitNode(FieldNode n) throws TypeException {
+		if (print) printNode(n,n.id);
+		if ( !isSubtype(visit(n.),ckvisit(n.getType())) )
+			throw new TypeException("Incompatible value for variable " + n.id,n.getLine());
+		return null;
+	}
+
+	@Override
+	public TypeNode visitNode(MethodNode n) throws TypeException {
+		return super.visitNode(n);
+	}
+
+	@Override
+	public TypeNode visitNode(ClassCallNode node) throws TypeException {
+		return super.visitNode(node);
+	}
+
+	@Override
+	public TypeNode visitNode(NewNode n) throws TypeException {
+		if (print) printNode(n);
+		ClassTypeNode t = (ClassTypeNode) visit(n);
+		if (t.allFields.size() != n.params.size())
+			throw new TypeException("Wrong number of parameters in the invocation of new " + n.className, n.getLine());
+		for (int i = 0; i < n.params.size(); i++)
+			if ( !(isSubtype(visit(n.params.get(i)), t.allFields.get(i))) )
+				throw new TypeException("Wrong type for " + (i+1) + "-th parameter in the invocation of new " + n.className, n.getLine());
+		return t;
+	}
+
+	@Override
+	public TypeNode visitNode(MethodTypeNode n) throws TypeException {
+		return super.visitNode(n);
+	}
+
+	@Override
+	public TypeNode visitNode(RefTypeNode n) throws TypeException {
+		return super.visitNode(n);
 	}
 }
